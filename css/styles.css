@@ -1,0 +1,361 @@
+/* css/styles.css - Main stylesheet */
+
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --background-color: #f8f9fa;
+    --text-color: #333;
+    --header-text-color: #ffffff;
+    --border-color: #dee2e6;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    direction: rtl; /* Right-to-left for Arabic UI */
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- App Layout --- */
+.app-header {
+    background-color: var(--primary-color);
+    color: var(--header-text-color);
+    padding: 1rem;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.app-main {
+    padding: 1rem;
+}
+
+.app-footer {
+    background-color: #f0f0f0;
+    color: var(--secondary-color);
+    padding: 0.5rem 1rem;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+/* --- Navigation --- */
+.main-nav {
+    margin-top: 0.5rem;
+}
+
+.nav-button {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: transparent;
+    color: var(--header-text-color);
+    border: 1px solid var(--header-text-color);
+    border-radius: 5px;
+    margin: 0 0.5rem;
+}
+
+.nav-button.active {
+    background-color: var(--header-text-color);
+    color: var(--primary-color);
+}
+
+h1 {
+    margin: 0;
+}
+
+/* --- Sub Navigation --- */
+.sub-nav {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.sub-nav-button {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: transparent;
+    color: var(--primary-color);
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.sub-nav-button.active {
+    border-bottom: 2px solid var(--primary-color);
+    font-weight: bold;
+}
+
+/* --- Forms --- */
+form {
+    background-color: #ffffff;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+form div {
+    margin-bottom: 0.75rem;
+}
+
+form label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: bold;
+}
+
+form input[type="text"],
+form input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    box-sizing: border-box; /* Important for 100% width */
+}
+
+form button {
+     padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    margin-right: 0.5rem;
+}
+
+form button[type="button"] {
+    background-color: var(--secondary-color);
+}
+
+
+/* --- Tables --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    background-color: #ffffff;
+}
+
+table th, table td {
+    border: 1px solid var(--border-color);
+    padding: 0.75rem;
+    text-align: right;
+}
+
+table th {
+    background-color: #e9ecef;
+    font-weight: bold;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+table button {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.9rem;
+    margin: 0 0.2rem;
+}
+
+/* --- Modal --- */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    position: relative;
+    z-index: 2001;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem; /* Switched to left for RTL */
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+#purchase-form select {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+
+/* --- POS View --- */
+.pos-grid-container {
+    display: grid;
+    grid-template-columns: 1fr 400px; /* Main grid takes remaining space, cart is fixed width */
+    gap: 1rem;
+    height: calc(100vh - 150px); /* Adjust height based on header/footer */
+}
+
+.pos-product-grid {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 5px;
+    padding: 1rem;
+}
+
+.pos-search-bar input {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+}
+
+.pos-product-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+    overflow-y: auto;
+}
+
+.product-card {
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.product-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.product-card-name {
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.product-card-price {
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+
+.pos-cart {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 1rem;
+}
+
+.pos-cart-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.pos-cart-items li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pos-cart-summary {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+.summary-row.total {
+    font-weight: bold;
+    font-size: 1.4rem;
+    color: var(--primary-color);
+}
+
+.pos-customer-selection {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.pos-customer-selection select {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.pos-cart-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.pos-cart-actions.four-buttons {
+    grid-template-columns: 1fr 1fr 1fr 2fr;
+}
+
+.pos-cart-actions button {
+    padding: 1rem;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+}
+
+.primary-action { background-color: #28a745; }
+.secondary-action { background-color: var(--secondary-color); }
+.danger-action { background-color: #dc3545; }

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة البقالة</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#007bff"/>
+    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+    <link rel="manifest" href="manifest.webmanifest">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>نظام إدارة البقالة</h1>
+        <nav class="main-nav">
+            <!-- Navigation buttons will be dynamically added here -->
+        </nav>
+    </header>
+
+    <main id="app-main" class="app-main">
+        <!-- Main content area for different modules will be rendered here -->
+        <div id="pos-view" class="pos-grid-container">
+
+            <div class="pos-product-grid">
+                <div class="pos-search-bar">
+                    <input type="text" id="pos-search-input" placeholder="ابحث عن منتج بالاسم أو الباركود...">
+                </div>
+                <div id="pos-product-list" class="pos-product-list">
+                    <!-- Product buttons will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <div class="pos-cart">
+                <div class="pos-cart-header">
+                    <h3>الفاتورة الحالية</h3>
+                    <div class="pos-customer-selection">
+                        <label for="pos-customer-select">العميل:</label>
+                        <select id="pos-customer-select">
+                            <option value="">بيع نقدي</option>
+                            <!-- Customer options will be dynamically inserted here -->
+                        </select>
+                    </div>
+                </div>
+                <ul id="pos-cart-items" class="pos-cart-items">
+                    <!-- Cart items will be dynamically inserted here -->
+                </ul>
+                <div class="pos-cart-summary">
+                    <div class="summary-row">
+                        <span>الإجمالي الفرعي:</span>
+                        <span id="cart-subtotal">0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>الضريبة (0%):</span>
+                        <span id="cart-tax">0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>الإجمالي:</span>
+                        <span id="cart-total">0.00</span>
+                    </div>
+                </div>
+                <div class="pos-cart-actions four-buttons">
+                    <button id="pos-hold-btn" class="secondary-action">تعليق</button>
+                    <button id="pos-clear-btn" class="danger-action">إلغاء</button>
+                    <button id="pos-pay-later-btn" class="secondary-action">آجل</button>
+                    <button id="pos-pay-btn" class="primary-action">دفع نقدي</button>
+                </div>
+            </div>
+
+        </div>
+        <div id="inventory-view" class="hidden">
+            <h2>إدارة المخزون</h2>
+            <nav class="sub-nav">
+                <button id="show-products-btn" class="sub-nav-button active" data-section="inventory-products-section">المنتجات</button>
+                <button id="show-suppliers-btn" class="sub-nav-button" data-section="inventory-suppliers-section">الموردين</button>
+            </nav>
+
+            <!-- Products Section -->
+            <section id="inventory-products-section">
+                <h3>قائمة المنتجات</h3>
+                <button id="add-product-btn">إضافة منتج جديد</button>
+                <button id="record-purchase-btn">تسجيل عملية شراء</button>
+                <form id="product-form" class="hidden">
+                    <input type="hidden" id="product-id" name="id">
+                    <div>
+                        <label for="product-name">اسم المنتج:</label>
+                        <input type="text" id="product-name" name="name" required>
+                    </div>
+                    <div>
+                        <label for="product-barcode">الباركود:</label>
+                        <input type="text" id="product-barcode" name="barcode">
+                    </div>
+                    <div>
+                        <label for="product-avg-cost">متوسط التكلفة:</label>
+                        <input type="number" id="product-avg-cost" name="avgCost" step="0.01" readonly>
+                    </div>
+                    <div>
+                        <label for="product-sale-price">سعر البيع:</label>
+                        <input type="number" id="product-sale-price" name="salePrice" step="0.01" required>
+                    </div>
+                     <div>
+                        <label for="product-quantity">الكمية الحالية:</label>
+                        <input type="number" id="product-quantity" name="quantity" value="0" readonly>
+                    </div>
+                    <button type="submit">حفظ المنتج</button>
+                    <button type="button" id="cancel-product-form">إلغاء</button>
+                </form>
+                <table id="products-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الباركود</th>
+                            <th>متوسط التكلفة</th>
+                            <th>سعر البيع</th>
+                            <th>الكمية</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table-body">
+                        <!-- Product rows will be inserted here by JS -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Suppliers Section -->
+            <section id="inventory-suppliers-section" class="hidden">
+                <h3>قائمة الموردين</h3>
+                <button id="add-supplier-btn">إضافة مورد جديد</button>
+                <form id="supplier-form" class="hidden">
+                    <input type="hidden" id="supplier-id" name="id">
+                    <div>
+                        <label for="supplier-name">اسم المورد:</label>
+                        <input type="text" id="supplier-name" name="name" required>
+                    </div>
+                    <div>
+                        <label for="supplier-contact">معلومات الاتصال:</label>
+                        <input type="text" id="supplier-contact" name="contact">
+                    </div>
+                    <button type="submit">حفظ المورد</button>
+                    <button type="button" id="cancel-supplier-form">إلغاء</button>
+                </form>
+                <table id="suppliers-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>معلومات الاتصال</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="suppliers-table-body">
+                        <!-- Supplier rows will be inserted here by JS -->
+                    </tbody>
+                </table>
+            </section>
+        </div>
+        <div id="reports-view" class="hidden">
+            <h2>التقارير</h2>
+            <nav class="sub-nav">
+                <button class="sub-nav-button active" data-section="sales-report-section">تقرير المبيعات والأرباح</button>
+                <button class="sub-nav-button" data-section="inventory-value-section">قيمة المخزون</button>
+                <button class="sub-nav-button" data-section="customer-balances-section">أرصدة العملاء</button>
+            </nav>
+
+            <section id="sales-report-section">
+                <h3>تقرير المبيعات والأرباح</h3>
+                <div class="report-controls">
+                    <label for="sales-report-start-date">من:</label>
+                    <input type="date" id="sales-report-start-date">
+                    <label for="sales-report-end-date">إلى:</label>
+                    <input type="date" id="sales-report-end-date">
+                    <button id="generate-sales-report-btn">إنشاء التقرير</button>
+                </div>
+                <div id="sales-report-content">
+                    <!-- Sales report will be rendered here -->
+                </div>
+            </section>
+
+            <section id="inventory-value-section" class="hidden">
+                <h3>تقرير قيمة المخزون الحالية</h3>
+                <div id="inventory-value-content">
+                    <!-- Inventory value report will be rendered here -->
+                </div>
+            </section>
+
+            <section id="customer-balances-section" class="hidden">
+                <h3>تقرير أرصدة العملاء</h3>
+                <div id="customer-balances-content">
+                    <!-- Customer balances report will be rendered here -->
+                </div>
+            </section>
+        </div>
+         <div id="customers-view" class="hidden">
+            <h2>إدارة العملاء</h2>
+            <section>
+                <h3>قائمة العملاء</h3>
+                <button id="add-customer-btn">إضافة عميل جديد</button>
+                <form id="customer-form" class="hidden">
+                    <input type="hidden" id="customer-id" name="id">
+                    <div>
+                        <label for="customer-name">اسم العميل:</label>
+                        <input type="text" id="customer-name" name="name" required>
+                    </div>
+                    <div>
+                        <label for="customer-phone">رقم الهاتف:</label>
+                        <input type="text" id="customer-phone" name="phone">
+                    </div>
+                    <div>
+                        <label for="customer-address">العنوان:</label>
+                        <input type="text" id="customer-address" name="address">
+                    </div>
+                    <div>
+                        <label for="customer-balance">الرصيد الحالي:</label>
+                        <input type="number" id="customer-balance" name="balance" value="0" readonly>
+                    </div>
+                    <button type="submit">حفظ العميل</button>
+                    <button type="button" id="cancel-customer-form">إلغاء</button>
+                </form>
+                <table id="customers-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>العنوان</th>
+                            <th>الرصيد</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customers-table-body">
+                        <!-- Customer rows will be inserted here by JS -->
+                    </tbody>
+                </table>
+            </section>
+        </div>
+        <div id="settings-view" class="hidden">
+            <h2>الإعدادات</h2>
+            <section>
+                <h3>إعدادات المتجر</h3>
+                <form id="settings-form">
+                    <div>
+                        <label for="setting-store-name">اسم المتجر:</label>
+                        <input type="text" id="setting-store-name" data-key="storeName">
+                    </div>
+                    <div>
+                        <label for="setting-store-address">عنوان المتجر:</label>
+                        <input type="text" id="setting-store-address" data-key="storeAddress">
+                    </div>
+                    <div>
+                        <label for="setting-currency-symbol">رمز العملة (مثال: $ أو ريال):</label>
+                        <input type="text" id="setting-currency-symbol" data-key="currencySymbol">
+                    </div>
+                    <button type="submit">حفظ الإعدادات</button>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <!-- Purchase Modal -->
+    <div id="purchase-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button id="close-purchase-modal-btn" class="modal-close-btn">&times;</button>
+            <h3>تسجيل عملية شراء جديدة</h3>
+            <form id="purchase-form">
+                <div>
+                    <label for="purchase-product">المنتج:</label>
+                    <select id="purchase-product" name="productId" required></select>
+                </div>
+                <div>
+                    <label for="purchase-supplier">المورد:</label>
+                    <select id="purchase-supplier" name="supplierId" required></select>
+                </div>
+                <div>
+                    <label for="purchase-quantity">الكمية:</label>
+                    <input type="number" id="purchase-quantity" name="quantity" min="1" required>
+                </div>
+                <div>
+                    <label for="purchase-cost">تكلفة الوحدة لهذه الشحنة:</label>
+                    <input type="number" id="purchase-cost" name="cost" step="0.01" min="0" required>
+                </div>
+                <button type="submit">تسجيل الشراء</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button id="close-payment-modal-btn" class="modal-close-btn">&times;</button>
+            <h3>إتمام عملية الدفع</h3>
+            <form id="payment-form">
+                <div class="summary-row total">
+                    <span>المبلغ الإجمالي:</span>
+                    <span id="payment-total">0.00</span>
+                </div>
+                <div>
+                    <label for="amount-paid">المبلغ المدفوع:</label>
+                    <input type="number" id="amount-paid" name="amountPaid" step="0.01" required>
+                </div>
+                <div class="summary-row">
+                    <span>الباقي:</span>
+                    <span id="change-due">0.00</span>
+                </div>
+                <button type="submit" class="primary-action">تأكيد الدفع</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        <p>الحالة: <span id="status-indicator">جاهز</span></p>
+        <button id="load-sample-data-btn" style="margin-right: 20px;">تحميل بيانات عيّنة</button>
+    </footer>
+
+    <!-- Core Scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/pos.js"></script>
+    <script src="js/inventory.js"></script>
+    <script src="js/customers.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/settings.js"></script>
+
+</body>
+</html>
