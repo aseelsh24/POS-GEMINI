@@ -93,10 +93,8 @@
                 for (const storeName in data) {
                     if (data.hasOwnProperty(storeName)) {
                         for (const item of data[storeName]) {
-                            if (storeName === 'users' && item.pin) {
-                                item.pinHash = await window.auth.hashPin(String(item.pin));
-                                delete item.pin;
-                            }
+                            // The user object in sample-data.json already has a pinHash.
+                            // No need to re-hash it here. Just add the item directly.
                             await window.db.add(storeName, item);
                         }
                     }
