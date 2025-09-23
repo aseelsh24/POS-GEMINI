@@ -1,4 +1,4 @@
-// js/customers.js - Customer Management Module
+// js/customers.js - Customer Management Logic
 
 (function() {
     'use strict';
@@ -6,27 +6,29 @@
     // --- DOM Elements ---
     const addCustomerBtn = document.getElementById('add-customer-btn');
     const customerForm = document.getElementById('customer-form');
-    const cancelCustomerFormBtn = document.getElementById('cancel-customer-form');
+    const cancelBtn = document.getElementById('cancel-customer-form-btn');
     const customersTableBody = document.getElementById('customers-table-body');
     const customerIdField = document.getElementById('customer-id');
+    // Payment Modal
+    const paymentModal = document.getElementById('customer-payment-modal');
+    const paymentForm = document.getElementById('customer-payment-form');
+    const closePaymentBtn = document.getElementById('close-payment-modal-btn');
+    const paymentCustomerId = document.getElementById('payment-customer-id');
+    const paymentCustomerName = document.getElementById('payment-customer-name');
 
-    /**
-     * Renders the customers table from database data.
-     */
     async function renderCustomersTable() {
         try {
-            const customers = await window.db.crud.getAll('customers');
-            customersTableBody.innerHTML = ''; // Clear existing table
-            customers.forEach(customer => {
+            const customers = await window.db.getAll('customers');
+            customersTableBody.innerHTML = '';
+            customers.forEach(c => {
                 const row = customersTableBody.insertRow();
                 row.innerHTML = `
-                    <td>${customer.name}</td>
-                    <td>${customer.phone || ''}</td>
-                    <td>${customer.address || ''}</td>
-                    <td>${(customer.balance || 0).toFixed(2)}</td>
+                    <td>${c.name}</td>
+                    <td>${c.phone || ''}</td>
+                    <td>${(c.balance || 0).toFixed(2)}</td>
                     <td>
-                        <button class="edit-customer-btn" data-id="${customer.id}">تعديل</button>
-                        <button class="delete-customer-btn" data-id="${customer.id}">حذف</button>
+                        <button class="edit-customer-btn" data-id="${c.id}">تعديل</button>
+                        <button class="record-payment-btn" data-id="${c.id}">تسجيل دفعة</button>
                     </td>
                 `;
             });
@@ -35,108 +37,121 @@
         }
     }
 
-    /**
-     * Handles the customer form submission for both add and edit.
-     */
-    async function handleCustomerFormSubmit(event) {
+    async function handleFormSubmit(event) {
         event.preventDefault();
-        const form = event.target;
-        const customerId = parseInt(customerIdField.value, 10);
+        const id = parseInt(customerIdField.value, 10);
         const customer = {
-            name: form.name.value,
-            phone: form.phone.value,
-            address: form.address.value,
+            name: document.getElementById('customer-name').value,
+            phone: document.getElementById('customer-phone').value,
         };
 
         try {
-            if (isNaN(customerId)) {
-                // Add new customer
-                customer.balance = 0; // Initial balance
-                await window.db.crud.add('customers', customer);
+            if (isNaN(id)) {
+                customer.balance = 0;
+                await window.db.add('customers', customer);
             } else {
-                // Update existing customer, preserving their balance
-                const existingCustomer = await window.db.crud.get('customers', customerId);
-                customer.id = customerId;
-                customer.balance = existingCustomer.balance || 0;
-                await window.db.crud.update('customers', customer);
+                const existing = (await window.db.getAll('customers')).find(c => c.id === id);
+                customer.id = id;
+                customer.balance = existing.balance || 0;
+                await window.db.put('customers', customer);
             }
-            form.reset();
-            customerIdField.value = '';
             customerForm.classList.add('hidden');
+            customerForm.reset();
+            customerIdField.value = '';
             await renderCustomersTable();
         } catch (error) {
             console.error('Error saving customer:', error);
         }
     }
 
-    /**
-     * Populates the customer form for editing.
-     */
-    async function editCustomer(id) {
+    async function showEditForm(id) {
         try {
-            const customer = await window.db.crud.get('customers', id);
+            const customers = await window.db.getAll('customers');
+            const customer = customers.find(c => c.id === id);
             if (customer) {
                 customerIdField.value = customer.id;
-                customerForm.name.value = customer.name;
-                customerForm.phone.value = customer.phone;
-                customerForm.address.value = customer.address;
-                customerForm.balance.value = (customer.balance || 0).toFixed(2);
+                document.getElementById('customer-name').value = customer.name;
+                document.getElementById('customer-phone').value = customer.phone || '';
+                document.getElementById('customer-balance').value = (customer.balance || 0).toFixed(2);
                 customerForm.classList.remove('hidden');
             }
         } catch (error) {
-            console.error('Error fetching customer for editing:', error);
+            console.error('Error fetching customer for edit:', error);
         }
     }
 
-    /**
-     * Deletes a customer after confirmation.
-     */
-    async function deleteCustomer(id) {
-        if (confirm('هل أنت متأكد من حذف هذا العميل؟ سيتم حذف جميع سجلاته.')) {
-            try {
-                await window.db.crud.delete('customers', id);
-                await renderCustomersTable();
-            } catch (error) {
-                console.error('Error deleting customer:', error);
+    async function showPaymentModal(id) {
+        try {
+            const customers = await window.db.getAll('customers');
+            const customer = customers.find(c => c.id === id);
+            if(customer) {
+                paymentCustomerId.value = id;
+                paymentCustomerName.textContent = customer.name;
+                paymentModal.classList.remove('hidden');
             }
+        } catch (error) {
+            console.error('Error fetching customer for payment:', error);
         }
     }
 
-    /**
-     * Sets up all event listeners for the customer module.
-     */
+    async function handlePaymentSubmit(event) {
+        event.preventDefault();
+        const id = parseInt(paymentCustomerId.value, 10);
+        const amount = parseFloat(document.getElementById('payment-amount').value);
+        if (isNaN(id) || isNaN(amount) || amount <= 0) {
+            alert('يرجى إدخال مبلغ صحيح.');
+            return;
+        }
+
+        try {
+            const customers = await window.db.getAll('customers');
+            const customer = customers.find(c => c.id === id);
+            if (customer) {
+                customer.balance = (customer.balance || 0) - amount;
+                await window.db.put('customers', customer);
+                paymentModal.classList.add('hidden');
+                paymentForm.reset();
+                await renderCustomersTable();
+            }
+        } catch (error) {
+            console.error('Error processing payment:', error);
+        }
+    }
+
     function setupEventListeners() {
         addCustomerBtn.addEventListener('click', () => {
             customerForm.reset();
             customerIdField.value = '';
             customerForm.classList.remove('hidden');
         });
-
-        cancelCustomerFormBtn.addEventListener('click', () => {
+        cancelBtn.addEventListener('click', () => {
             customerForm.classList.add('hidden');
         });
+        customerForm.addEventListener('submit', handleFormSubmit);
 
-        customerForm.addEventListener('submit', handleCustomerFormSubmit);
-
-        customersTableBody.addEventListener('click', (event) => {
-            const target = event.target;
-            const id = parseInt(target.getAttribute('data-id'), 10);
-            if (target.classList.contains('edit-customer-btn')) editCustomer(id);
-            if (target.classList.contains('delete-customer-btn')) deleteCustomer(id);
+        customersTableBody.addEventListener('click', (e) => {
+            if (e.target.matches('.edit-customer-btn')) {
+                showEditForm(parseInt(e.target.dataset.id, 10));
+            }
+            if (e.target.matches('.record-payment-btn')) {
+                showPaymentModal(parseInt(e.target.dataset.id, 10));
+            }
         });
+
+        closePaymentBtn.addEventListener('click', () => {
+            paymentModal.classList.add('hidden');
+        });
+        paymentForm.addEventListener('submit', handlePaymentSubmit);
     }
 
-    /**
-     * Initializes the customer module.
-     */
     function init() {
+        console.log('Customers module initialized.');
         setupEventListeners();
         renderCustomersTable();
-        console.log('Customers module initialized.');
     }
 
     window.customers = {
-        init: init
+        init
     };
 
 })();

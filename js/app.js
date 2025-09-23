@@ -3,170 +3,140 @@
 (function() {
     'use strict';
 
-    const mainNav = document.querySelector('.main-nav');
-    const mainContent = document.getElementById('app-main');
+    // DOM Elements
+    const loginScreen = document.getElementById('login-screen');
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+    const appContainer = document.getElementById('app-container');
+    const header = document.querySelector('#app-container header');
+    const views = document.querySelectorAll('.view');
+    const loadDataBtn = document.getElementById('load-sample-data-btn');
+    const statusIndicator = document.getElementById('status-indicator');
 
-    // Define the application's views
-    const views = {
-        'pos-view': { title: 'نقطة البيع', initialized: false },
-        'inventory-view': { title: 'المخزون', initialized: false },
-        'reports-view': { title: 'التقارير', initialized: false },
-        'customers-view': { title: 'العملاء', initialized: false },
-        'settings-view': { title: 'الإعدادات', initialized: false }
+    const viewModules = {
+        'pos-view': { module: window.pos, title: 'نقطة البيع', roles: ['Owner', 'Manager', 'Cashier'] },
+        'inventory-view': { module: window.inventory, title: 'المخزون', roles: ['Owner', 'Manager'] },
+        'suppliers-view': { module: window.suppliers, title: 'الموردين', roles: ['Owner', 'Manager'] },
+        'customers-view': { module: window.customers, title: 'العملاء', roles: ['Owner', 'Manager', 'Cashier'] },
+        'reports-view': { module: window.reports, title: 'التقارير', roles: ['Owner', 'Manager'] },
+        'backup-view': { module: window.backup, title: 'النسخ الاحتياطي', roles: ['Owner'] }
     };
 
-    /**
-     * Shows a specific view and hides all others.
-     * @param {string} viewId The ID of the view to show.
-     */
     function showView(viewId) {
-        // Hide all views
-        Object.keys(views).forEach(id => {
-            const viewElement = document.getElementById(id);
-            if (viewElement) {
-                viewElement.classList.add('hidden');
-            }
-        });
-
-        // Show the selected view
-        const viewToShow = document.getElementById(viewId);
-        if (viewToShow) {
-            viewToShow.classList.remove('hidden');
+        views.forEach(view => view.classList.add('hidden'));
+        const activeView = document.getElementById(viewId);
+        if (activeView) {
+            activeView.classList.remove('hidden');
         }
 
-        // Update active button state
-        const navButtons = mainNav.querySelectorAll('.nav-button');
-        navButtons.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.view === viewId);
-        });
-
-        // Initialize module if it hasn't been already
-        if (views[viewId] && !views[viewId].initialized) {
-            switch(viewId) {
-                case 'pos-view':
-                     if (window.pos && typeof window.pos.init === 'function') {
-                        window.pos.init();
-                    }
-                    break;
-                case 'inventory-view':
-                    if (window.inventory && typeof window.inventory.init === 'function') {
-                        window.inventory.init();
-                    }
-                    break;
-                case 'customers-view':
-                    if (window.customers && typeof window.customers.init === 'function') {
-                        window.customers.init();
-                    }
-                    break;
-                case 'reports-view':
-                    if (window.reports && typeof window.reports.init === 'function') {
-                        window.reports.init();
-                    }
-                    break;
-                case 'settings-view':
-                    if (window.settings && typeof window.settings.init === 'function') {
-                        window.settings.init();
-                    }
-                    break;
-                // Add cases for other modules here as they are built
-            }
-            views[viewId].initialized = true;
+        // Initialize module if it has an init function and hasn't been initialized
+        const moduleDef = viewModules[viewId];
+        if (moduleDef && moduleDef.module && !moduleDef.module.initialized) {
+            moduleDef.module.init();
+            moduleDef.module.initialized = true;
         }
     }
 
-    /**
-     * Creates the main navigation buttons dynamically.
-     */
-    function setupNavigation() {
-        Object.keys(views).forEach(viewId => {
-            const button = document.createElement('button');
-            button.className = 'nav-button';
-            button.dataset.view = viewId;
-            button.textContent = views[viewId].title;
-            button.addEventListener('click', () => showView(viewId));
-            mainNav.appendChild(button);
+    function setupHeader() {
+        const user = window.auth.getCurrentUser();
+        if (!user) return;
+
+        const nav = document.createElement('nav');
+        let navHtml = '';
+
+        for (const viewId in viewModules) {
+            const viewDef = viewModules[viewId];
+            if (viewDef.roles.includes(user.role)) {
+                navHtml += `<button data-view="${viewId}">${viewDef.title}</button>`;
+            }
+        }
+        navHtml += `<button id="logout-btn" style="margin-right: auto;">تسجيل الخروج</button>`;
+        nav.innerHTML = navHtml;
+
+        // Clear previous nav if any, then append
+        const existingNav = header.querySelector('nav');
+        if(existingNav) existingNav.remove();
+        header.appendChild(nav);
+
+        nav.addEventListener('click', (e) => {
+            if (e.target.matches('[data-view]')) {
+                showView(e.target.dataset.view);
+            } else if (e.target.matches('#logout-btn')) {
+                window.auth.logout();
+            }
         });
+    }
+
+    function startApp() {
+        loginScreen.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        setupHeader();
+        showView('pos-view'); // Default view after login
+        statusIndicator.textContent = `مرحباً ${window.auth.getCurrentUser().username}`;
     }
 
     function registerServiceWorker() {
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => console.log('SW registered:', registration.scope))
-                    .catch(error => console.error('SW registration failed:', error));
-            });
+            navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW reg failed:', err));
         }
     }
 
-    async function initializeDatabase() {
-        try {
-            await window.db.init();
-            document.getElementById('status-indicator').textContent = 'قاعدة البيانات جاهزة';
-        } catch (error) {
-            console.error('Error initializing database:', error);
-            document.getElementById('status-indicator').textContent = 'خطأ في قاعدة البيانات';
-        }
-    }
-
-    function setupSampleDataButton() {
-        const loadButton = document.getElementById('load-sample-data-btn');
-        if (!loadButton) return;
-
-        loadButton.addEventListener('click', async () => {
-            if (!confirm('هل أنت متأكد؟ سيتم حذف جميع المنتجات والموردين الحاليين واستبدالهم ببيانات العيّنة.')) {
-                return;
-            }
-
+    function setupLoadDataButton() {
+        loadDataBtn.addEventListener('click', async () => {
+            if (!confirm('هل أنت متأكد؟ سيتم حذف جميع البيانات الحالية.')) return;
             try {
-                const response = await fetch('/cr_samples/inventory-data.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                const response = await fetch('/cr_samples/sample-data.json');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
 
-                // Clear existing data
-                await window.db.crud.clear('products');
-                await window.db.crud.clear('suppliers');
-                console.log('Cleared products and suppliers stores.');
-
-                // Load new data
-                for (const product of data.products) {
-                    await window.db.crud.add('products', product);
+                // This requires a more robust db helper, but for now we add
+                for (const storeName in data) {
+                    if (data.hasOwnProperty(storeName)) {
+                        for (const item of data[storeName]) {
+                            if (storeName === 'users' && item.pin) {
+                                item.pinHash = await window.auth.hashPin(String(item.pin));
+                                delete item.pin;
+                            }
+                            await window.db.add(storeName, item);
+                        }
+                    }
                 }
-                for (const supplier of data.suppliers) {
-                    await window.db.crud.add('suppliers', supplier);
-                }
-                console.log('Loaded sample data.');
-
-                // Refresh views if the inventory module is loaded
-                if (window.inventory) {
-                    await window.inventory.renderProductsTable();
-                    await window.inventory.renderSuppliersTable();
-                }
-
-                alert('تم تحميل بيانات العيّنة بنجاح!');
-
+                alert('تم تحميل بيانات العيّنة بنجاح! يرجى إعادة تحميل الصفحة.');
+                window.location.reload();
             } catch (error) {
                 console.error('Failed to load sample data:', error);
-                alert('فشل تحميل بيانات العيّنة.');
             }
         });
     }
 
-    /**
-     * Main application entry point.
-     */
     async function main() {
-        console.log('Application starting...');
-        setupNavigation();
-        setupSampleDataButton(); // Set up the new button
         registerServiceWorker();
-        await initializeDatabase();
+        setupLoadDataButton();
 
-        // Show the POS view by default
-        showView('pos-view');
+        try {
+            await window.db.init();
+            window.auth.init();
+
+            if (window.auth.checkSession()) {
+                startApp();
+            } else {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const success = await window.auth.login(loginForm.username.value, loginForm.pin.value);
+                    if (success) {
+                        startApp();
+                    } else {
+                        loginError.textContent = 'اسم المستخدم أو الرقم السري غير صحيح.';
+                        loginError.classList.remove('hidden');
+                    }
+                });
+            }
+        } catch (error) {
+            document.body.innerHTML = '<h1>فشل تهيئة التطبيق.</h1>';
+            console.error(error);
+        }
     }
 
-    document.addEventListener('DOMContentLoaded', main);
+    window.addEventListener('load', main);
 
 })();
