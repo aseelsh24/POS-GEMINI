@@ -1,182 +1,149 @@
+// js/reports.js - Reporting Logic
+
 (function() {
     'use strict';
 
     // --- DOM Elements ---
-    const reportsNav = document.querySelector('#reports-view .sub-nav');
-    const reportSections = document.querySelectorAll('#reports-view section');
-    // Sales Report
-    const generateSalesReportBtn = document.getElementById('generate-sales-report-btn');
-    const salesReportContentDiv = document.getElementById('sales-report-content');
-    const startDateInput = document.getElementById('sales-report-start-date');
-    const endDateInput = document.getElementById('sales-report-end-date');
-    // Inventory Value Report
-    const inventoryValueContentDiv = document.getElementById('inventory-value-content');
-    // Customer Balances Report
-    const customerBalancesContentDiv = document.getElementById('customer-balances-content');
+    const nav = document.querySelector('#reports-view .sub-nav');
+    const outputDiv = document.getElementById('report-output');
+    const generateBtn = document.getElementById('generate-report-btn');
+    const exportBtn = document.getElementById('export-csv-btn');
+    const printBtn = document.getElementById('print-report-btn');
+    const dateControls = document.querySelector('#reports-view .report-controls');
 
-    /**
-     * Generates and displays the sales and profit report for a given date range.
-     */
+    let currentReportData = [];
+    let currentReportHeaders = [];
+    let currentReportTitle = '';
+
     async function generateSalesReport() {
-        try {
-            const allSales = await window.db.crud.getAll('sales');
-            const startDate = startDateInput.value ? new Date(startDateInput.value).setHours(0, 0, 0, 0) : null;
-            const endDate = endDateInput.value ? new Date(endDateInput.value).setHours(23, 59, 59, 999) : null;
+        const startDate = document.getElementById('report-start-date').value;
+        const endDate = document.getElementById('report-end-date').value;
+        const sales = await window.db.getAll('sales');
 
-            const filteredSales = allSales.filter(sale => {
-                const saleDate = new Date(sale.date);
-                if (startDate && saleDate < startDate) return false;
-                if (endDate && saleDate > endDate) return false;
-                return true;
-            });
-
-            let totalRevenue = 0;
-            let totalCost = 0;
-            let reportHTML = '<table><thead><tr><th>التاريخ</th><th>العناصر</th><th>الإجمالي</th><th>الربح</th></tr></thead><tbody>';
-
-            filteredSales.forEach(sale => {
-                let saleRevenue = sale.totalAmount;
-                let saleCost = 0;
-                let itemsHtml = '<ul>';
-                sale.items.forEach(item => {
-                    saleCost += (item.cost || 0) * item.quantity;
-                    itemsHtml += `<li>${item.name} (x${item.quantity})</li>`;
-                });
-                itemsHtml += '</ul>';
-
-                totalRevenue += saleRevenue;
-                totalCost += saleCost;
-
-                const saleProfit = saleRevenue - saleCost;
-                reportHTML += `
-                    <tr>
-                        <td>${new Date(sale.date).toLocaleString()}</td>
-                        <td>${itemsHtml}</td>
-                        <td>${saleRevenue.toFixed(2)}</td>
-                        <td>${saleProfit.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-
-            reportHTML += '</tbody></table>';
-
-            const totalProfit = totalRevenue - totalCost;
-            const summaryHTML = `
-                <div class="report-summary">
-                    <div>إجمالي الإيرادات: <strong>${totalRevenue.toFixed(2)}</strong></div>
-                    <div>إجمالي التكلفة: <strong>${totalCost.toFixed(2)}</strong></div>
-                    <div>إجمالي الربح: <strong>${totalProfit.toFixed(2)}</strong></div>
-                </div>
-            `;
-
-            salesReportContentDiv.innerHTML = summaryHTML + reportHTML;
-
-        } catch (error) {
-            console.error('Error generating sales report:', error);
-            salesReportContentDiv.innerHTML = '<p>حدث خطأ أثناء إنشاء التقرير.</p>';
-        }
-    }
-
-    /**
-     * Generates and displays the current inventory value report.
-     */
-    async function generateInventoryValueReport() {
-        try {
-            const allProducts = await window.db.crud.getAll('products');
-            let totalValue = 0;
-            let reportHTML = '<table><thead><tr><th>المنتج</th><th>الكمية</th><th>متوسط التكلفة</th><th>القيمة الإجمالية</th></tr></thead><tbody>';
-
-            allProducts.forEach(product => {
-                const value = (product.avgCost || 0) * (product.quantity || 0);
-                totalValue += value;
-                reportHTML += `
-                    <tr>
-                        <td>${product.name}</td>
-                        <td>${product.quantity || 0}</td>
-                        <td>${(product.avgCost || 0).toFixed(2)}</td>
-                        <td>${value.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-
-            reportHTML += '</tbody></table>';
-            const summaryHTML = `<div class="report-summary"><div>القيمة الإجمالية للمخزون: <strong>${totalValue.toFixed(2)}</strong></div></div>`;
-            inventoryValueContentDiv.innerHTML = summaryHTML + reportHTML;
-
-        } catch (error) {
-            console.error('Error generating inventory value report:', error);
-            inventoryValueContentDiv.innerHTML = '<p>حدث خطأ أثناء إنشاء التقرير.</p>';
-        }
-    }
-
-    /**
-     * Generates and displays the customer balances report.
-     */
-    async function generateCustomerBalancesReport() {
-        try {
-            const allCustomers = await window.db.crud.getAll('customers');
-            const customersWithBalance = allCustomers.filter(c => c.balance && c.balance > 0);
-            let totalBalance = 0;
-            let reportHTML = '<table><thead><tr><th>العميل</th><th>الهاتف</th><th>الرصيد المستحق</th></tr></thead><tbody>';
-
-            customersWithBalance.forEach(customer => {
-                totalBalance += customer.balance;
-                reportHTML += `
-                    <tr>
-                        <td>${customer.name}</td>
-                        <td>${customer.phone || ''}</td>
-                        <td>${customer.balance.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-
-            reportHTML += '</tbody></table>';
-            const summaryHTML = `<div class="report-summary"><div>إجمالي الديون المستحقة: <strong>${totalBalance.toFixed(2)}</strong></div></div>`;
-            customerBalancesContentDiv.innerHTML = summaryHTML + reportHTML;
-
-        } catch (error) {
-            console.error('Error generating customer balances report:', error);
-            customerBalancesContentDiv.innerHTML = '<p>حدث خطأ أثناء إنشاء التقرير.</p>';
-        }
-    }
-
-    /**
-     * Sets up all event listeners for the reports module.
-     */
-    function setupEventListeners() {
-        reportsNav.addEventListener('click', (event) => {
-            const target = event.target;
-            if (target.matches('.sub-nav-button')) {
-                // Handle tab switching
-                reportsNav.querySelectorAll('.sub-nav-button').forEach(btn => btn.classList.remove('active'));
-                target.classList.add('active');
-
-                const sectionId = target.dataset.section;
-                reportSections.forEach(section => {
-                    section.classList.toggle('hidden', section.id !== sectionId);
-                });
-
-                // Generate report if it's one of the auto-generated ones
-                if (sectionId === 'inventory-value-section') generateInventoryValueReport();
-                if (sectionId === 'customer-balances-section') generateCustomerBalancesReport();
-            }
+        const filtered = sales.filter(s => {
+            const saleDate = new Date(s.timestamp);
+            if (startDate && saleDate < new Date(startDate)) return false;
+            if (endDate && saleDate > new Date(endDate)) return false;
+            return true;
         });
 
-        generateSalesReportBtn.addEventListener('click', generateSalesReport);
+        let totalRevenue = 0;
+        let totalCost = 0;
+        let tableHtml = '<table><thead><tr><th>التاريخ</th><th>الإجمالي</th><th>الربح</th></tr></thead><tbody>';
+        currentReportData = [];
+        currentReportHeaders = ['Date', 'Total', 'Profit'];
+
+        filtered.forEach(sale => {
+            const saleCost = sale.items.reduce((acc, item) => acc + (item.purchaseCost * item.quantity), 0);
+            const profit = sale.finalTotal - saleCost;
+            totalRevenue += sale.finalTotal;
+            totalCost += saleCost;
+            tableHtml += `<tr><td>${new Date(sale.timestamp).toLocaleDateString()}</td><td>${sale.finalTotal.toFixed(2)}</td><td>${profit.toFixed(2)}</td></tr>`;
+            currentReportData.push({ Date: new Date(sale.timestamp).toLocaleDateString(), Total: sale.finalTotal.toFixed(2), Profit: profit.toFixed(2) });
+        });
+        tableHtml += '</tbody></table>';
+
+        const totalProfit = totalRevenue - totalCost;
+        const summaryHtml = `<div class="summary">إجمالي المبيعات: ${totalRevenue.toFixed(2)} | إجمالي الربح: ${totalProfit.toFixed(2)}</div>`;
+        outputDiv.innerHTML = summaryHtml + tableHtml;
+        currentReportTitle = 'Sales and Profit Report';
     }
 
-    /**
-     * Initializes the reports module.
-     */
+    async function generateStockValueReport() {
+        const products = await window.db.getAll('products');
+        let totalValue = 0;
+        let tableHtml = '<table><thead><tr><th>المنتج</th><th>الكمية</th><th>تكلفة الشراء</th><th>قيمة المخزون</th></tr></thead><tbody>';
+        currentReportData = [];
+        currentReportHeaders = ['Product', 'Stock', 'Purchase Cost', 'Stock Value'];
+
+        products.forEach(p => {
+            const value = p.stock * p.purchaseCost;
+            totalValue += value;
+            tableHtml += `<tr><td>${p.name}</td><td>${p.stock}</td><td>${p.purchaseCost.toFixed(2)}</td><td>${value.toFixed(2)}</td></tr>`;
+            currentReportData.push({ Product: p.name, Stock: p.stock, 'Purchase Cost': p.purchaseCost.toFixed(2), 'Stock Value': value.toFixed(2) });
+        });
+        tableHtml += '</tbody></table>';
+        const summaryHtml = `<div class="summary">إجمالي قيمة المخزون: ${totalValue.toFixed(2)}</div>`;
+        outputDiv.innerHTML = summaryHtml + tableHtml;
+        currentReportTitle = 'Stock Value Report';
+    }
+
+    async function generateLowStockReport() {
+        const products = await window.db.getAll('products');
+        const lowStockProducts = products.filter(p => p.stock <= p.lowStockAlert);
+        let tableHtml = '<table><thead><tr><th>المنتج</th><th>الكمية الحالية</th><th>حد التنبيه</th></tr></thead><tbody>';
+        currentReportData = [];
+        currentReportHeaders = ['Product', 'Current Stock', 'Alert Level'];
+
+        lowStockProducts.forEach(p => {
+            tableHtml += `<tr><td>${p.name}</td><td>${p.stock}</td><td>${p.lowStockAlert}</td></tr>`;
+            currentReportData.push({ Product: p.name, 'Current Stock': p.stock, 'Alert Level': p.lowStockAlert });
+        });
+        tableHtml += '</tbody></table>';
+        outputDiv.innerHTML = tableHtml;
+        currentReportTitle = 'Low Stock Report';
+    }
+
+    function exportToCsv() {
+        let csvContent = "data:text/csv;charset=utf-8," + currentReportHeaders.join(",") + "\n"
+            + currentReportData.map(e => Object.values(e).join(",")).join("\n");
+
+        var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `${currentReportTitle.replace(/ /g, '_')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    async function printReport() {
+        const response = await fetch('/templates/reports.html');
+        const template = await response.text();
+        const populatedHtml = template
+            .replace('{{reportTitle}}', currentReportTitle)
+            .replace('{{generationDate}}', new Date().toLocaleString())
+            .replace('{{summary}}', outputDiv.querySelector('.summary')?.outerHTML || '')
+            .replace('{{table}}', outputDiv.querySelector('table')?.outerHTML || '');
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(populatedHtml);
+        printWindow.document.close();
+        printWindow.print();
+    }
+
+    function setupEventListeners() {
+        let activeReportGenerator = generateSalesReport;
+        dateControls.style.display = 'block';
+
+        nav.addEventListener('click', e => {
+            if (e.target.matches('[data-report]')) {
+                const reportType = e.target.dataset.report;
+                dateControls.style.display = 'none';
+                if (reportType === 'sales') {
+                    activeReportGenerator = generateSalesReport;
+                    dateControls.style.display = 'block';
+                } else if (reportType === 'stock-value') {
+                    activeReportGenerator = generateStockValueReport;
+                } else if (reportType === 'low-stock') {
+                    activeReportGenerator = generateLowStockReport;
+                }
+                activeReportGenerator();
+            }
+        });
+        generateBtn.addEventListener('click', () => activeReportGenerator());
+        exportBtn.addEventListener('click', exportToCsv);
+        printBtn.addEventListener('click', printReport);
+    }
+
     function init() {
-        setupEventListeners();
-        // Generate the default visible report on init
-        generateSalesReport();
         console.log('Reports module initialized.');
+        setupEventListeners();
+        generateSalesReport(); // Generate default report on load
     }
 
     window.reports = {
-        init: init
+        init
     };
 
 })();

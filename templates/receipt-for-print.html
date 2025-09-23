@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إيصال</title>
+    <style>
+        @page {
+            size: 80mm auto; /* Common thermal printer roll width */
+            margin: 5mm;
+        }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 280px; /* Width for 80mm roll with margins */
+            margin: 0 auto;
+            color: #000;
+        }
+        h1, p, div { margin: 5px 0; }
+        h1 { text-align: center; font-size: 1.2rem; }
+        hr { border: none; border-top: 1px dashed #000; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 2px; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .totals { margin-top: 5px; padding-top: 5px; border-top: 1px dashed #000; }
+        .totals p { display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+    <h1>{{storeName}}</h1>
+    <p class="text-center">{{storeAddress}}</p>
+    <hr>
+    <p>التاريخ: {{saleDate}}</p>
+    <p>فاتورة رقم: {{saleId}}</p>
+    <p>الكاشير: {{cashierName}}</p>
+    <hr>
+    <table>
+        <thead>
+            <tr>
+                <th>الصنف</th>
+                <th>الكمية</th>
+                <th>السعر</th>
+                <th>الإجمالي</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{items}}
+        </tbody>
+    </table>
+    <hr>
+    <div class="totals">
+        <p><strong>الإجمالي:</strong> <span>{{total}}</span></p>
+        <p><strong>الخصم:</strong> <span>{{discount}}</span></p>
+        <p><strong>الإجمالي النهائي:</strong> <span>{{finalTotal}}</span></p>
+    </div>
+    <hr>
+    <p class="text-center">شكراً لزيارتكم!</p>
+
+    <script>
+        window.onload = () => {
+            // Uncomment to auto-print and close
+            // window.print();
+            // setTimeout(window.close, 1000);
+        };
+    </script>
+</body>
+</html>

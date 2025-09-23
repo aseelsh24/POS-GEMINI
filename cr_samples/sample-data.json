@@ -1,0 +1,53 @@
+{
+    "products": [
+        {
+            "name": "خبز أبيض",
+            "barcode": "1001",
+            "salePrice": 1.50,
+            "avgCost": 1.10,
+            "quantity": 100
+        },
+        {
+            "name": "حليب ١ لتر",
+            "barcode": "1002",
+            "salePrice": 6.00,
+            "avgCost": 5.20,
+            "quantity": 50
+        },
+        {
+            "name": "جبنة مثلثات",
+            "barcode": "1003",
+            "salePrice": 4.75,
+            "avgCost": 4.00,
+            "quantity": 75
+        }
+    ],
+    "suppliers": [
+        {
+            "name": "المورد الرئيسي للمواد الغذائية",
+            "contact": "contact@main-supplier.com"
+        }
+    ],
+    "customers": [
+        {
+            "name": "عميل نقدي افتراضي",
+            "phone": "000-000-0000",
+            "address": "N/A",
+            "balance": 0
+        }
+    ],
+    "users": [
+        {
+            "username": "admin",
+            "role": "Owner",
+            "pinHash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"
+        }
+    ],
+    "settings": [
+        { "key": "storeName", "value": "متجري" },
+        { "key": "currencySymbol", "value": "ريال" }
+    ],
+    "counters": [
+        { "key": "nextInvoiceId", "value": 1001 }
+    ]
+}
